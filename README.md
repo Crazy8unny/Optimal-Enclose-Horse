@@ -1,19 +1,19 @@
-# Optimal-Enclose-Horse
-A small enhancement for the daily puzzle in Enclose Horse (go check it out here: https://enclose.horse/
- — it’s a really fun game!).
+# Enclose Horse – Daily Puzzle Enhancer
 
-What’s new?
+A small enhancement for the daily puzzle in [Enclose Horse](https://enclose.horse/) — a really fun game! 🐎
 
-The site now reveals the optimal score in advance
+## What’s new?
 
-A built-in timer challenges you to reach that score as fast as possible
+- The site now reveals the **optimal score in advance**  
+- A built-in **timer** challenges you to reach that score as fast as possible
 
-Now you can proudly tell your friends: “I solved it in 2 minutes!” 😄
+Now you can proudly tell your friends:
 
-Controls
+> “I solved it in 2 minutes!” 😄
 
-Clicking the timer pauses/resumes it
+## Controls
 
-Clicking Submit works exactly like the original site
+- **Click the timer** to pause/resume it  
+- **Click Submit** to submit your score, just like on the original site
 
 Have fun!
