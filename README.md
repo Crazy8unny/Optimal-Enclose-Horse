@@ -16,4 +16,9 @@ Now you can proudly tell your friends:
 - **Click the timer** to pause/resume it  
 - **Click Submit** to submit your score, just like on the original site
 
-Have fun!
+## How to use the overlay script
+- Add this as a bookmark in your browser: ``javascript:(async()=>{await import("https://crazy8unny.github.io/Optimal-Enclose-Horse/overlay.js")})();``
+- Open the original enclose.horse website.
+- Click the bookmark you created.
+
+That’s it—have fun! 🎉
