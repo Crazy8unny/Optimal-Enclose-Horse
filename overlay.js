@@ -2,129 +2,96 @@
     if (window.__horseOverlayLoaded) return;
     window.__horseOverlayLoaded = true;
 
-    const style = document.createElement("style");
-    style.textContent = `
-    #horseOverlay {
-      position: fixed;
-      bottom: 20px;
-      left: 0;
-      right: 0;
-      z-index: 999999;
-      display: flex;
-      justify-content: space-between;
-      padding: 0 20px;
-      pointer-events: none;
-      font-family: Schoolbell, cursive;
+    const bottomContainer = document.getElementById("bottomContainer");
+    const firstStatsRow = bottomContainer?.querySelector(".stats-row");
+    const gridStats = document.getElementById("gridStats");
+    const wallsStat = document.getElementById("wallsStat");
+    if (!bottomContainer || !firstStatsRow || !gridStats || !wallsStat) {
+        console.warn("Horse overlay: required elements not found");
+        return;
     }
 
-    .horsePanel {
-      padding: 6px 10px;
-      background: rgba(0,0,0,0.7);
-      color: white;
-      border-radius: 8px;
-      min-width: 60px;
-      text-align: center;
-      font-size: 18px;
-      pointer-events: auto;
-    }
+    // ===== Create Optimal Row =====
+    const optimalRow = document.createElement("div");
+    optimalRow.className = "stats-row";
+    optimalRow.style.marginTop = "0px";
+    optimalRow.style.width = gridStats.offsetWidth + "px"; // match gridStats width
+    optimalRow.style.justifyContent = "flex-start";
 
-    #horsePrev, #horseNext {
-      position: fixed;
-      top: 6%;
-      z-index: 999999;
-      cursor: pointer;
-      background: #1B6B3A;
-      color: #BBD3C4;
-      border-radius: 6px;
-      padding: 10px 14px;
-      font-size: 18px;
-    }
+    const optimalEl = document.createElement("div");
+    optimalEl.id = "horseOptimal";
+    optimalEl.style.fontFamily = "Schoolbell, cursive";
+    optimalEl.style.fontSize = "16px";
+    optimalEl.style.pointerEvents = "none";
 
-    #horsePrev { left: 20px; }
-    #horseNext { right: 20px; }
+    optimalRow.appendChild(optimalEl);
+    bottomContainer.insertBefore(optimalRow, firstStatsRow.nextSibling);
 
-    @media (max-width: 700px) {
-      #horsePrev, #horseNext {
-        top: 9%;
-        font-size: 16px;
-        padding: 8px 10px;
-      }
-    }
-  `;
-    document.head.appendChild(style);
+    // ===== Create Timer inside gridStats =====
+    const timerEl = document.createElement("div");
+    timerEl.id = "horseTimer";
+    timerEl.style.fontFamily = "Schoolbell, cursive";
+    timerEl.style.fontSize = "16px";
+    timerEl.style.color = "#BBD3C4";
+    timerEl.style.textAlign = "center";
+    timerEl.style.flex = "1"; // take remaining space
+    timerEl.style.pointerEvents = "none";
 
-    const overlay = document.createElement("div");
-    overlay.id = "horseOverlay";
-    overlay.innerHTML = `
-    <div id="horseScore" class="horsePanel">Loading score...</div>
-    <div id="horseTimer" class="horsePanel">00:00</div>
-  `;
-    document.body.appendChild(overlay);
+    // Insert after wallsStat
+    wallsStat.insertAdjacentElement("afterend", timerEl);
 
-    const prev = document.createElement("div");
-    prev.id = "horsePrev";
-    prev.textContent = "< Prev";
-    document.body.appendChild(prev);
-
-    const next = document.createElement("div");
-    next.id = "horseNext";
-    next.textContent = "Next >";
-    document.body.appendChild(next);
-
-    // Timer
+    // ===== Timer Logic =====
     let seconds = 0;
     let running = true;
-    const timerEl = document.getElementById("horseTimer");
-
-    setInterval(() => {
+    function updateTimer() {
         if (!running) return;
         seconds++;
         const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
         const secs = String(seconds % 60).padStart(2, "0");
         timerEl.textContent = `${mins}:${secs}`;
-    }, 1000);
+    }
+    setInterval(updateTimer, 1000);
 
     timerEl.onclick = () => {
         running = !running;
         timerEl.style.opacity = running ? "1" : "0.5";
     };
 
+    // ===== Get current date safely =====
     function getDateFromURL() {
-        const parts = location.pathname.split("/");
-        return parts[2];
+        const match = location.pathname.match(/\/play\/(\d{4}-\d{2}-\d{2})/);
+        if (match) return match[1];
+        return new Intl.DateTimeFormat("en-CA", {
+            timeZone: "Asia/Jerusalem",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+        }).format(new Date());
     }
 
-    function goDay(offset) {
-        const d = new Date(getDateFromURL());
-        d.setDate(d.getDate() + offset);
-        const newDate = d.toISOString().slice(0, 10);
-        location.href = `/play/${newDate}`;
-    }
-
-    prev.onclick = () => {
-        seconds = 0;
-        goDay(-1);
-    };
-
-    next.onclick = () => {
-        seconds = 0;
-        goDay(1);
-    };
-
+    // ===== Load Optimal Score with Bonus =====
     async function loadScore() {
         try {
             const date = getDateFromURL();
-
             const dailyRes = await fetch(`/api/daily/${date}`);
             const daily = await dailyRes.json();
 
             const statsRes = await fetch(`/api/levels/${daily.id}/stats`);
             const stats = await statsRes.json();
 
-            document.getElementById("horseScore").innerText =
-                "Optimal: " + stats.optimalScore;
+            let text = `Optimal: ${stats.optimalScore}`;
+
+            if (daily.hasBonus) {
+                const bonusRes = await fetch(`/api/daily/bonus/${daily.id}`);
+                const bonusData = await bonusRes.json();
+                optimalEl.innerHTML = `Optimal: ${stats.optimalScore} | <span style="color:#E8B8D0">Bonus: ${bonusData.optimalScore}</span>`;
+            } else {
+                optimalEl.textContent = text;
+            }
+
         } catch (e) {
             console.log("score failed", e);
+            optimalEl.textContent = "Optimal: N/A";
         }
     }
 
